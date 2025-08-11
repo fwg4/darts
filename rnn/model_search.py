@@ -2,7 +2,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from genotypes import PRIMITIVES, STEPS, CONCAT, Genotype
-from torch.autograd import Variable
 from collections import namedtuple
 from model import DARTSCell, RNNModel
 

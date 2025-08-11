@@ -1,0 +1,22 @@
+
+services:
+  darts:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    container_name: darts
+    working_dir: /workspace/darts
+    volumes:
+      - .:/workspace/darts   # 掛載原始碼
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    stdin_open: true
+    tty: true
+

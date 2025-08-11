@@ -15,7 +15,6 @@ import torch.backends.cudnn as cudnn
 import data
 import model
 
-from torch.autograd import Variable
 from utils import batchify, get_batch, repackage_hidden, create_exp_dir, save_checkpoint
 
 parser = argparse.ArgumentParser(description='PyTorch PennTreeBank/WikiText2 Language Model')
@@ -206,8 +205,8 @@ def train():
 
             gc.collect()
 
-        # `clip_grad_norm` helps prevent the exploding gradient problem in RNNs.
-        torch.nn.utils.clip_grad_norm(model.parameters(), args.clip)
+        # `clip_grad_norm_` helps prevent the exploding gradient problem in RNNs.
+        torch.nn.utils.clip_grad_norm_(model.parameters(), args.clip)
         optimizer.step()
 
         # total_loss += raw_loss.data

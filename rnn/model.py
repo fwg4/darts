@@ -6,7 +6,6 @@ from genotypes import STEPS
 from utils import mask2d
 from utils import LockedDropout
 from utils import embedded_dropout
-from torch.autograd import Variable
 
 INITRANGE = 0.04
 
