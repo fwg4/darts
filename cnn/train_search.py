@@ -126,32 +126,34 @@ def main():
     architect = Architect(model, args)
 
     for epoch in range(args.epochs):
-        scheduler.step()
-        lr = scheduler.get_last_lr()
+        lr = scheduler.get_last_lr()[0]
         logging.info('epoch %d lr %e', epoch, lr)
 
         genotype = model.genotype()
         logging.info('genotype = %s', genotype)
-        wandb.log({'genotype': str(genotype), 'lr': lr}, step=epoch)
 
-        print(model.alphas_normal.softmax(dim=-1))
-        print(model.alphas_reduce.softmax(dim=-1))
+        # print(model.alphas_normal.softmax(dim=-1))
+        # print(model.alphas_reduce.softmax(dim=-1))
 
         # training
         train_acc, train_obj = train(
             train_queue, valid_queue, model, architect, criterion, optimizer, lr, epoch)
         logging.info('train_acc %f', train_acc)
 
+        scheduler.step()
+
         # validation
         valid_acc, valid_obj = infer(valid_queue, model, criterion, epoch)
         logging.info('valid_acc %f', valid_acc)
 
         wandb.log({
-            'train_acc': train_acc,
-            'train_loss': train_obj,
-            'valid_acc': valid_acc,
-            'valid_loss': valid_obj
-        }, step=epoch)
+            "epoch": epoch,
+            "train_acc": train_acc,
+            "train_loss": train_obj,
+            "valid_acc": valid_acc,
+            "valid_loss": valid_obj,
+            "lr": lr
+        })
         utils.save(model, os.path.join(args.save, 'weights.pt'))
 
 
@@ -188,8 +190,12 @@ def train(train_queue, valid_queue, model, architect, criterion, optimizer, lr, 
         top1.update(prec1.item(), n)
         top5.update(prec5.item(), n)
         global_step = epoch * len(train_queue) + step
-        wandb.log({'train_step_loss': objs.avg, 'train_step_top1': top1.avg,
-                  'train_step_top5': top5.avg}, step=global_step)
+        wandb.log({
+            "train_step": global_step,
+            "train_step_loss": objs.avg,
+            "train_step_top1": top1.avg,
+            "train_step_top5": top5.avg
+        })
 
         if step % args.report_freq == 0:
             logging.info('train %03d %e %f %f', step,
@@ -218,8 +224,12 @@ def infer(valid_queue, model, criterion, epoch):
         top1.update(prec1.item(), n)
         top5.update(prec5.item(), n)
         valid_step = epoch * len(valid_queue) + step
-        wandb.log({'valid_step_loss': objs.avg, 'valid_step_top1': top1.avg,
-                  'valid_step_top5': top5.avg}, step=valid_step)
+        wandb.log({
+            "valid_step": valid_step,
+            "valid_step_loss": objs.avg,
+            "valid_step_top1": top1.avg,
+            "valid_step_top5": top5.avg
+        })
 
         if step % args.report_freq == 0:
             logging.info('valid %03d %e %f %f', step,
@@ -233,4 +243,18 @@ if __name__ == '__main__':
     wandb.init(
         project=os.getenv("WANDB_PROJECT", "default_project"),
         config=vars(args))
+    wandb.define_metric("train_step_loss", step_metric="train_step")
+    wandb.define_metric("train_step_top1", step_metric="train_step")
+    wandb.define_metric("train_step_top5", step_metric="train_step")
+
+    wandb.define_metric("valid_step_loss", step_metric="valid_step")
+    wandb.define_metric("valid_step_top1", step_metric="valid_step")
+    wandb.define_metric("valid_step_top5", step_metric="valid_step")
+
+    wandb.define_metric("train_acc", step_metric="epoch")
+    wandb.define_metric("train_loss", step_metric="epoch")
+    wandb.define_metric("valid_acc", step_metric="epoch")
+    wandb.define_metric("valid_loss", step_metric="epoch")
+    wandb.define_metric("lr", step_metric="epoch")
+
     main()

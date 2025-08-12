@@ -21,12 +21,19 @@ class Architect(object):
         loss = self.model._loss(input, target)
 
         with torch.no_grad():
-            theta = _concat([p.data for p in self.model.parameters()]).clone()
+            theta = _concat([p for p in self.model.parameters()]).clone()
+
+            # 取 momentum_buffer，如果沒有就給零 tensor，並 concat 成單一 tensor
             try:
-                moment = _concat([network_optimizer.state[v]['momentum_buffer'] if 'momentum_buffer' in network_optimizer.state[v]
-                                 else torch.zeros_like(v) for v in self.model.parameters()]).mul_(self.network_momentum)
+                moment = _concat([
+                    network_optimizer.state[v]['momentum_buffer']
+                    if 'momentum_buffer' in network_optimizer.state[v] else torch.zeros_like(v)
+                    for v in self.model.parameters()
+                ]).mul_(self.network_momentum)
             except Exception:
                 moment = torch.zeros_like(theta)
+
+            # 這裡保證是單一 tensor
             dtheta = _concat(torch.autograd.grad(
                 loss, self.model.parameters()))
             dtheta = dtheta + self.network_weight_decay * theta
