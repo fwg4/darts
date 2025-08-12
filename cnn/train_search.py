@@ -241,7 +241,7 @@ def infer(valid_queue, model, criterion, epoch):
 if __name__ == '__main__':
 
     wandb.init(
-        project=os.getenv("WANDB_PROJECT", "default_project"),
+        project="DARTS",
         config=vars(args))
     wandb.define_metric("train_step_loss", step_metric="train_step")
     wandb.define_metric("train_step_top1", step_metric="train_step")
